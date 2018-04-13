@@ -35,6 +35,7 @@
 #ifdef D_MOTE
 
 #include "CommissioningDMote.h"
+#include "CommissioningKMote.h"
 
 #elif defined TEST_MOTE
 
