@@ -29,7 +29,26 @@
 #include "gps.h"
 #include "mpl3115.h"
 #include "LoRaMac.h"
-#include "Commissioning.h"
+
+#define D_MOTE
+
+#ifdef D_MOTE
+
+#include "CommissioningDMote.h"
+
+#elif defined K_MOTE
+
+#include "CommissioningKMote.h"
+
+#elif defined TEST_MOTE
+
+#include "CommissioningTestMote.h"
+
+#else
+
+#error Pls add define for D_MOTE or K_MOTE or TEST_MOTE
+
+#endif
 
 #ifndef ACTIVE_REGION
 
