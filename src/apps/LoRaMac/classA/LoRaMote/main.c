@@ -792,7 +792,7 @@ int main( void )
 
     Gpio_t Gpio_Button;
     Gpio_Button.pin = IOE_3;
-    Gpio_Button.pinindex = 1<<3;
+    Gpio_Button.pinIndex = 1<<3;
 
     while( 1 )
     {
@@ -889,13 +889,13 @@ int main( void )
             }
             case DEVICE_STATE_SEND:
             {
-                GpioWrite(&LED1);
-                if (GpioRead(&Gpio_Button)
+                GpioWrite(&Led1,1);
+                if (GpioRead(&Gpio_Button))
                 {
                     HAL_Delay(100);
-                    if (GpioRead(&Gpio_Button)
+                    if (GpioRead(&Gpio_Button))
                     {
-                        GpioWrite(&LED1);
+                        GpioWrite(&Led1,1);
                         if( NextTx == true )
                         {
                             PrepareTxFrame( AppPort );
