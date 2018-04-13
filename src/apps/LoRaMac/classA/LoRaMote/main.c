@@ -29,7 +29,22 @@
 #include "gps.h"
 #include "mpl3115.h"
 #include "LoRaMac.h"
-#include "Commissioning.h"
+
+#define D_MOTE
+
+#ifdef D_MOTE
+
+#include "CommissioningDMote.h"
+
+#elif defined TEST_MOTE
+
+#include "CommissioningTestMote.h"
+
+#else
+
+#error Pls add define for D_MOTE or TEST_MOTE
+
+#endif
 
 #ifndef ACTIVE_REGION
 
@@ -76,7 +91,7 @@
  *
  * \remark Please note that ETSI mandates duty cycled transmissions. Use only for test purposes
  */
-#define LORAWAN_DUTYCYCLE_ON                        true
+#define LORAWAN_DUTYCYCLE_ON                        false
 
 #endif
 
@@ -767,6 +782,7 @@ int main( void )
     BoardInitMcu( );
     BoardInitPeriph( );
 
+    GpioWrite( &Led3, 0 );
     DeviceState = DEVICE_STATE_INIT;
 
     while( 1 )
@@ -785,7 +801,7 @@ int main( void )
                 TimerInit( &TxNextPacketTimer, OnTxNextPacketTimerEvent );
 
                 TimerInit( &Led1Timer, OnLed1TimerEvent );
-                TimerSetValue( &Led1Timer, 25 );
+                TimerSetValue( &Led1Timer, 1000 );
 
                 TimerInit( &Led2Timer, OnLed2TimerEvent );
                 TimerSetValue( &Led2Timer, 25 );
@@ -878,7 +894,7 @@ int main( void )
                 else
                 {
                     // Schedule next packet transmission
-                    TxDutyCycleTime = APP_TX_DUTYCYCLE + randr( -APP_TX_DUTYCYCLE_RND, APP_TX_DUTYCYCLE_RND );
+                    TxDutyCycleTime = 5000 + randr( -APP_TX_DUTYCYCLE_RND, APP_TX_DUTYCYCLE_RND );
                 }
                 DeviceState = DEVICE_STATE_CYCLE;
                 break;
