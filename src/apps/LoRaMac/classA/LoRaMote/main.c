@@ -29,26 +29,7 @@
 #include "gps.h"
 #include "mpl3115.h"
 #include "LoRaMac.h"
-
-#define D_MOTE
-
-#ifdef D_MOTE
-
-#include "CommissioningDMote.h"
-
-#elif defined K_MOTE
-
-#include "CommissioningKMote.h"
-
-#elif defined TEST_MOTE
-
-#include "CommissioningTestMote.h"
-
-#else
-
-#error Pls add define for D_MOTE or TEST_MOTE
-
-#endif
+#include "Commissioning.h"
 
 #ifndef ACTIVE_REGION
 
@@ -57,6 +38,7 @@
 #define ACTIVE_REGION LORAMAC_REGION_EU868
 
 #endif
+
 
 /*!
  * Defines the application data transmission duty cycle. 5s, value in [ms].
@@ -95,7 +77,7 @@
  *
  * \remark Please note that ETSI mandates duty cycled transmissions. Use only for test purposes
  */
-#define LORAWAN_DUTYCYCLE_ON                        false
+#define LORAWAN_DUTYCYCLE_ON                        true
 
 #endif
 
@@ -103,6 +85,7 @@
  * LoRaWAN application port
  */
 #define LORAWAN_APP_PORT                            2
+
 
 static uint8_t DevEui[] = LORAWAN_DEVICE_EUI;
 static uint8_t AppEui[] = LORAWAN_APPLICATION_EUI;
@@ -786,8 +769,11 @@ int main( void )
     BoardInitMcu( );
     BoardInitPeriph( );
 
-    GpioWrite( &Led3, 0 );
     DeviceState = DEVICE_STATE_INIT;
+
+    Gpio_t Gpio_Button;
+    Gpio_Button.pin = IOE_3;
+    Gpio_Button.pinindex = 1<<3;
 
     while( 1 )
     {
@@ -805,7 +791,7 @@ int main( void )
                 TimerInit( &TxNextPacketTimer, OnTxNextPacketTimerEvent );
 
                 TimerInit( &Led1Timer, OnLed1TimerEvent );
-                TimerSetValue( &Led1Timer, 1000 );
+                TimerSetValue( &Led1Timer, 25 );
 
                 TimerInit( &Led2Timer, OnLed2TimerEvent );
                 TimerSetValue( &Led2Timer, 25 );
@@ -884,24 +870,33 @@ int main( void )
             }
             case DEVICE_STATE_SEND:
             {
-                if( NextTx == true )
+                GpioWrite(&LED1);
+                if (GpioRead(&Gpio_Button)
                 {
-                    PrepareTxFrame( AppPort );
+                    HAL_Delay(100);
+                    if (GpioRead(&Gpio_Button)
+                    {
+                        GpioWrite(&LED1);
+                        if( NextTx == true )
+                        {
+                            PrepareTxFrame( AppPort );
 
-                    NextTx = SendFrame( );
+                            NextTx = SendFrame( );
+                        }
+                        if( ComplianceTest.Running == true )
+                        {
+                            // Schedule next packet transmission
+                            TxDutyCycleTime = 5000; // 5000 ms //Test 100ms
+                        }
+                        else
+                        {
+                            // Schedule next packet transmission
+                            TxDutyCycleTime = APP_TX_DUTYCYCLE + randr( -APP_TX_DUTYCYCLE_RND, APP_TX_DUTYCYCLE_RND );
+                        }
+                        //DeviceState = DEVICE_STATE_CYCLE;
+                        break;
+                    }
                 }
-                if( ComplianceTest.Running == true )
-                {
-                    // Schedule next packet transmission
-                    TxDutyCycleTime = 5000; // 5000 ms
-                }
-                else
-                {
-                    // Schedule next packet transmission
-                    TxDutyCycleTime = 5000 + randr( -APP_TX_DUTYCYCLE_RND, APP_TX_DUTYCYCLE_RND );
-                }
-                DeviceState = DEVICE_STATE_CYCLE;
-                break;
             }
             case DEVICE_STATE_CYCLE:
             {
