@@ -29,6 +29,7 @@
 #include "gps.h"
 #include "mpl3115.h"
 #include "LoRaMac.h"
+#include "delay.h"
 
 #define D_MOTE
 
@@ -892,7 +893,7 @@ int main( void )
                 GpioWrite(&Led1,1);
                 if (GpioRead(&Gpio_Button))
                 {
-                    HAL_Delay(100);
+                    DelayMs(100);
                     if (GpioRead(&Gpio_Button))
                     {
                         GpioWrite(&Led1,1);
