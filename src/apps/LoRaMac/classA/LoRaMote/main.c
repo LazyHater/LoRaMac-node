@@ -31,7 +31,7 @@
 #include "LoRaMac.h"
 #include "delay.h"
 
-#define D_MOTE
+#define TEST_MOTE
 
 #ifdef D_MOTE
 
@@ -896,9 +896,10 @@ int main( void )
                     DelayMs(100);
                     if (GpioRead(&Gpio_Button))
                     {
-                        GpioWrite(&Led1,GpioRead(&Led1) ^ 1);
+                        
                         if( NextTx == true )
                         {
+                            GpioWrite(&Led1,GpioRead(&Led1) ^ 1);
                             PrepareTxFrame( AppPort );
 
                             NextTx = SendFrame( );
