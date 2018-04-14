@@ -890,13 +890,13 @@ int main( void )
             }
             case DEVICE_STATE_SEND:
             {
-                GpioWrite(&Led1,GpioRead(&Led1) ^ 1);
+                
                 if (GpioRead(&Gpio_Button))
                 {
                     DelayMs(100);
                     if (GpioRead(&Gpio_Button))
                     {
-                        GpioWrite(&Led1,1);
+                        GpioWrite(&Led1,GpioRead(&Led1) ^ 1);
                         if( NextTx == true )
                         {
                             PrepareTxFrame( AppPort );
