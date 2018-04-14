@@ -61,5 +61,10 @@
         "REGION_KR920":"OFF",
         "REGION_IN865":"OFF",
         "REGION_US915_HYBRID":"OFF"
+    },
+    "files.associations": {
+        "utilities.h": "c",
+        "delay-board.h": "c",
+        "gps.h": "c"
     }
 }

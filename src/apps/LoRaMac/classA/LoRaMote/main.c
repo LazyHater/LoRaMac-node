@@ -30,8 +30,6 @@
 #include "mpl3115.h"
 #include "LoRaMac.h"
 
-#define D_MOTE
-
 #ifdef D_MOTE
 
 #include "CommissioningDMote.h"
