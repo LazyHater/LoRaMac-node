@@ -31,8 +31,11 @@
 #include "LoRaMac.h"
 #include "delay.h"
 
+<<<<<<< HEAD
 #define TEST_MOTE
 
+=======
+>>>>>>> dev
 #ifdef D_MOTE
 
 #include "CommissioningDMote.h"
