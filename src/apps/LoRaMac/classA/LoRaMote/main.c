@@ -31,11 +31,6 @@
 #include "LoRaMac.h"
 #include "delay.h"
 
-<<<<<<< HEAD
-#define TEST_MOTE
-
-=======
->>>>>>> dev
 #ifdef D_MOTE
 
 #include "CommissioningDMote.h"
@@ -100,7 +95,7 @@
  *
  * \remark Please note that ETSI mandates duty cycled transmissions. Use only for test purposes
  */
-#define LORAWAN_DUTYCYCLE_ON                        true
+#define LORAWAN_DUTYCYCLE_ON                        false
 
 #endif
 
@@ -426,7 +421,7 @@ static void OnTxNextPacketTimerEvent( void )
 static void OnLed1TimerEvent( void )
 {
     TimerStop( &Led1Timer );
-    // Switch LED 1 OFF
+    // Switch LED 1 OFF`
     GpioWrite( &Led1, 1 );
 }
 
@@ -798,6 +793,7 @@ int main( void )
     Gpio_Button.pin = IOE_3;
     Gpio_Button.pinIndex = 1<<3;
 
+
     while( 1 )
     {
         switch( DeviceState )
@@ -917,7 +913,7 @@ int main( void )
                             // Schedule next packet transmission
                             TxDutyCycleTime = APP_TX_DUTYCYCLE + randr( -APP_TX_DUTYCYCLE_RND, APP_TX_DUTYCYCLE_RND );
                         }
-                        //DeviceState = DEVICE_STATE_CYCLE;
+                        DeviceState = DEVICE_STATE_CYCLE;
                         break;
                     }
                 }
