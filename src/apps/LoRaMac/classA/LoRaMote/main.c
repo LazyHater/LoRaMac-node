@@ -29,24 +29,8 @@
 #include "gps.h"
 #include "mpl3115.h"
 #include "LoRaMac.h"
+#include "Commisioning.h"
 
-#ifdef D_MOTE
-
-#include "CommissioningDMote.h"
-
-#elif defined K_MOTE
-
-#include "CommissioningKMote.h"
-
-#elif defined TEST_MOTE
-
-#include "CommissioningTestMote.h"
-
-#else
-
-#error Pls add define for D_MOTE or TEST_MOTE
-
-#endif
 
 #ifndef ACTIVE_REGION
 
@@ -784,7 +768,6 @@ int main( void )
     BoardInitMcu( );
     BoardInitPeriph( );
 
-    GpioWrite( &Led3, 0 );
     DeviceState = DEVICE_STATE_INIT;
 
     while( 1 )
@@ -806,7 +789,7 @@ int main( void )
                 TimerSetValue( &Led1Timer, 1000 );
 
                 TimerInit( &Led2Timer, OnLed2TimerEvent );
-                TimerSetValue( &Led2Timer, 25 );
+                TimerSetValue( &Led2Timer, 1000 );
 
                 mibReq.Type = MIB_ADR;
                 mibReq.Param.AdrEnable = LORAWAN_ADR_ON;
