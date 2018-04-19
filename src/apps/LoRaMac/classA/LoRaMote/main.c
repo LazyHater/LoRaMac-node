@@ -29,6 +29,7 @@
 #include "gps.h"
 #include "mpl3115.h"
 #include "LoRaMac.h"
+#include "delay.h"
 
 /*!
  * Timer to handle the state of LED1
@@ -39,11 +40,6 @@ static TimerEvent_t Led1Timer;
  * Timer to handle the state of LED2
  */
 static TimerEvent_t Led2Timer;
-
-/*!
- * Timer to handle the state of LED3
- */
-static TimerEvent_t Led3Timer;
 
 /*!
  * Indicates if a new packet can be sent
@@ -74,17 +70,14 @@ static void OnLed2TimerEvent( void )
     //TimerStop( &Led2Timer );
     
     TimerReset(&Led2Timer);
-    GpioWrite( &Led2, GpioRead(&Led2) ^ 1);
+    GpioToggle( &Led2);
 }
 
-/*!
- * \brief Function executed on Led 2 Timeout event
- */
-static void OnLed3TimerEvent( void )
+void Empty(void)
 {
-    TimerReset(&Led3Timer);
-    GpioWrite( &Led3, GpioRead(&Led3) ^ 1);
+   GpioWrite (&Led3, 0);   
 }
+    Gpio_t Gpio_t_Ext3;
 
 /**
  * Main application entry point.
@@ -94,10 +87,9 @@ int main( void )
     BoardInitMcu( );
     BoardInitPeriph( );
 
-    GpioWrite( &Led1, 0 );
-    GpioWrite( &Led2, 0 );
-    GpioWrite( &Led3, 0 );
-
+    GpioWrite( &Led1, 1 );
+    GpioWrite( &Led2, 1 );
+    GpioWrite( &Led3, 1 );
 
     TimerInit( &Led1Timer, OnLed1TimerEvent );
     TimerSetValue( &Led1Timer, 1000 );
@@ -105,17 +97,18 @@ int main( void )
     TimerInit( &Led2Timer, OnLed2TimerEvent );
     TimerSetValue( &Led2Timer, 300 );
     
-    TimerInit( &Led3Timer, OnLed3TimerEvent );
-    TimerSetValue( &Led3Timer, 25 );
-
-    
     TimerStart( &Led1Timer );
     TimerStart( &Led2Timer );
-    TimerStart( &Led3Timer );
 
+    Gpio_t_Ext3.pin = IOE_3;
+    Gpio_t_Ext3.pinIndex = 1<<3;
 
-    while( 1 )
-    {
+    GpioInit( &Gpio_t_Ext3, IOE_3, PIN_INPUT, PIN_PUSH_PULL, PIN_NO_PULL, 0 );
+    GpioSetInterrupt(&Gpio_t_Ext3,  IRQ_RISING_EDGE, IRQ_HIGH_PRIORITY, Empty);
        
+
+    while( 1 ) { 
+      //GpioWrite( &Led3, GpioRead(&Gpio_t_Ext3));
+    // DelayMs(100);
     }
 }
