@@ -149,6 +149,11 @@ static TimerEvent_t Led1Timer;
 static TimerEvent_t Led2Timer;
 
 /*!
+ * Timer to handle the state of LED2
+ */
+static TimerEvent_t Led4Timer;
+
+/*!
  * Indicates if a new packet can be sent
  */
 static bool NextTx = true;
@@ -172,8 +177,9 @@ static enum eDeviceState
 extern Gpio_t Led1; // red
 extern Gpio_t Led2; // green
 extern Gpio_t Led3; // orange
+Gpio_t Led4; // external led
 
-void onPacketReveiveEvent (uint8_t port, uint8_t* data, uint8_t data_len);
+void onPacketReceiveEvent (uint8_t port, uint8_t* data, uint8_t data_len);
 
 /*!
  * \brief   Prepares the payload of the frame
@@ -349,6 +355,16 @@ static void OnLed2TimerEvent( void )
 }
 
 /*!
+ * \brief Function executed on Led 2 Timeout event
+ */
+static void OnLed4TimerEvent( void )
+{
+    TimerReset( &Led4Timer );
+    // Switch LED 2 OFF
+    GpioToggle( &Led4 );
+}
+
+/*!
  * \brief   MCPS-Confirm event function
  *
  * \param   [IN] mcpsConfirm - Pointer to the confirm structure,
@@ -442,7 +458,7 @@ static void McpsIndication( McpsIndication_t *mcpsIndication )
 
     if( mcpsIndication->RxData == true )
     {
-        onPacketReveiveEvent(mcpsIndication->Port, mcpsIndication->Buffer, mcpsIndication->BufferSize );
+        onPacketReceiveEvent(mcpsIndication->Port, mcpsIndication->Buffer, mcpsIndication->BufferSize );
     }
 
     // Switch LED 2 ON for each received downlink
@@ -523,15 +539,25 @@ static void MlmeIndication( MlmeIndication_t *mlmeIndication )
     }
 }
 
-void onPacketReveiveEvent (uint8_t port, uint8_t* data, uint8_t data_len) {
+void onPacketReceiveEvent (uint8_t port, uint8_t* data, uint8_t data_len) {
  if( data_len == 1 )
     {
         AppLedStateOn = data[0] & 0x01;
         if ( AppLedStateOn & 0x01 ) {
             GpioWrite( &Led3,  0 );
+            GpsStart();
         } else {
             GpioWrite( &Led3,  1 );
+            GpsStop();
         }
+    }
+}
+
+void checkHasFix() {
+    if (GpsHasFix()) {
+        GpioWrite( &Led4, 0);
+    } else {
+        GpioWrite( &Led4, 1);
     }
 }
 
@@ -546,6 +572,12 @@ int main( void )
 
     BoardInitMcu( );
     BoardInitPeriph( );
+
+    GpioInit( &Led4, IOE_4, PIN_OUTPUT, PIN_PUSH_PULL, PIN_NO_PULL, 1 );
+    checkHasFix();
+
+    GpioWrite( &Led3, 0);
+    GpsStart();
 
     DeviceState = DEVICE_STATE_INIT;
      
@@ -630,6 +662,7 @@ int main( void )
                 // Schedule next packet transmission
                 TimerSetValue( &TxNextPacketTimer, TxDutyCycleTime );
                 TimerStart( &TxNextPacketTimer );
+                checkHasFix();
                 break;
             }
             case DEVICE_STATE_SLEEP:
