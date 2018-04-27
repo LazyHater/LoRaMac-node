@@ -163,15 +163,17 @@ static enum eDeviceState
     DEVICE_STATE_SEND,
     DEVICE_STATE_CYCLE,
     DEVICE_STATE_SLEEP
-}DeviceState;
+} DeviceState;
 
 
 /*!
  * LED GPIO pins objects
  */
-extern Gpio_t Led1;
-extern Gpio_t Led2;
-extern Gpio_t Led3;
+extern Gpio_t Led1; // red
+extern Gpio_t Led2; // green
+extern Gpio_t Led3; // orange
+
+void onPacketReveiveEvent (uint8_t port, uint8_t* data, uint8_t data_len);
 
 /*!
  * \brief   Prepares the payload of the frame
@@ -440,25 +442,15 @@ static void McpsIndication( McpsIndication_t *mcpsIndication )
 
     if( mcpsIndication->RxData == true )
     {
-        switch( mcpsIndication->Port )
-        {
-        case 1: // The application LED can be controlled on port 1 or 2
-        case 2:
-            if( mcpsIndication->BufferSize == 1 )
-            {
-                AppLedStateOn = mcpsIndication->Buffer[0] & 0x01;
-                GpioWrite( &Led3, ( ( AppLedStateOn & 0x01 ) != 0 ) ? 0 : 1 );
-            }
-            break;
-        default:
-            break;
-        }
+        onPacketReveiveEvent(mcpsIndication->Port, mcpsIndication->Buffer, mcpsIndication->BufferSize );
     }
 
     // Switch LED 2 ON for each received downlink
     GpioWrite( &Led2, 0 );
     TimerStart( &Led2Timer );
 }
+
+
 
 /*!
  * \brief   MLME-Confirm event function
@@ -531,6 +523,18 @@ static void MlmeIndication( MlmeIndication_t *mlmeIndication )
     }
 }
 
+void onPacketReveiveEvent (uint8_t port, uint8_t* data, uint8_t data_len) {
+ if( data_len == 1 )
+    {
+        AppLedStateOn = data[0] & 0x01;
+        if ( AppLedStateOn & 0x01 ) {
+            GpioWrite( &Led3,  0 );
+        } else {
+            GpioWrite( &Led3,  1 );
+        }
+    }
+}
+
 /**
  * Main application entry point.
  */
@@ -544,7 +548,7 @@ int main( void )
     BoardInitPeriph( );
 
     DeviceState = DEVICE_STATE_INIT;
-
+     
     while( 1 )
     {
         switch( DeviceState )
@@ -574,24 +578,13 @@ int main( void )
                 mibReq.Param.EnablePublicNetwork = LORAWAN_PUBLIC_NETWORK;
                 LoRaMacMibSetRequestConfirm( &mibReq );
 
-#if defined( REGION_EU868 )
-                LoRaMacTestSetDutyCycleOn( LORAWAN_DUTYCYCLE_ON );
-#endif
+                LoRaMacTestSetDutyCycleOn( LORAWAN_DUTYCYCLE_ON ); // important line to get 5sec interval
+
                 DeviceState = DEVICE_STATE_JOIN;
                 break;
             }
             case DEVICE_STATE_JOIN:
             {
-                // Choose a random device address if not already defined in Commissioning.h
-                if( DevAddr == 0 )
-                {
-                    // Random seed initialization
-                    srand1( BoardGetRandomSeed( ) );
-
-                    // Choose a random device address
-                    DevAddr = randr( 0, 0x01FFFFFF );
-                }
-
                 mibReq.Type = MIB_NET_ID;
                 mibReq.Param.NetID = LORAWAN_NETWORK_ID;
                 LoRaMacMibSetRequestConfirm( &mibReq );
