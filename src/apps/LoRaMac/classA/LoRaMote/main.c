@@ -149,9 +149,9 @@ static TimerEvent_t Led1Timer;
 static TimerEvent_t Led2Timer;
 
 /*!
- * Timer to handle the state of LED2
+ * Timer to check state of panic button
  */
-static TimerEvent_t Led4Timer;
+static TimerEvent_t PanicButtonTimer;
 
 /*!
  * Indicates if a new packet can be sent
@@ -180,7 +180,7 @@ extern Gpio_t Led3; // orange
 Gpio_t Led4; // external led
 
 void onPacketReceiveEvent (uint8_t port, uint8_t* data, uint8_t data_len);
-
+void checkHasFix();
 /*!
  * \brief   Prepares the payload of the frame
  */
@@ -354,14 +354,21 @@ static void OnLed2TimerEvent( void )
     GpioWrite( &Led2, 1 );
 }
 
+Gpio_t Gpio_t_Ext3;
 /*!
  * \brief Function executed on Led 2 Timeout event
  */
-static void OnLed4TimerEvent( void )
+static void OnPanicButtonEvent( void )
 {
-    TimerReset( &Led4Timer );
     // Switch LED 2 OFF
-    GpioToggle( &Led4 );
+    if ( GpioRead(&Gpio_t_Ext3)) {
+      GpioToggle( &Led2 );
+      
+     // TimerStop( &TxNextPacketTimer );
+     // checkHasFix();
+      OnTxNextPacketTimerEvent();
+    }
+    TimerReset( &PanicButtonTimer );
 }
 
 /*!
@@ -580,7 +587,8 @@ int main( void )
     GpsStart();
 
     DeviceState = DEVICE_STATE_INIT;
-     
+    
+
     while( 1 )
     {
         switch( DeviceState )
@@ -601,6 +609,15 @@ int main( void )
 
                 TimerInit( &Led2Timer, OnLed2TimerEvent );
                 TimerSetValue( &Led2Timer, 1000 );
+
+                TimerInit( &PanicButtonTimer, OnPanicButtonEvent );
+                TimerSetValue( &PanicButtonTimer, 20 );
+                TimerStart( &PanicButtonTimer );
+
+                Gpio_t_Ext3.pin = IOE_3;
+                Gpio_t_Ext3.pinIndex = 1<<3;
+
+                GpioInit( &Gpio_t_Ext3, IOE_3, PIN_INPUT, PIN_PUSH_PULL, PIN_NO_PULL, 0 );
 
                 mibReq.Type = MIB_ADR;
                 mibReq.Param.AdrEnable = LORAWAN_ADR_ON;
@@ -650,7 +667,7 @@ int main( void )
                 }
 
                 // Schedule next packet transmission
-                TxDutyCycleTime = 5000 + randr( -APP_TX_DUTYCYCLE_RND, APP_TX_DUTYCYCLE_RND );
+                TxDutyCycleTime = 15000 + randr( -APP_TX_DUTYCYCLE_RND, APP_TX_DUTYCYCLE_RND );
                 
                 DeviceState = DEVICE_STATE_CYCLE;
                 break;
@@ -668,7 +685,7 @@ int main( void )
             case DEVICE_STATE_SLEEP:
             {
                 // Wake up through events
-                TimerLowPowerHandler( );
+                //TimerLowPowerHandler( );
                 break;
             }
             default:
